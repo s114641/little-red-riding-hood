@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紅帽與狼的林間小徑 - Third Person Edition</title>
+    <style>
+        :root {
+            --card-bg: #ffffff; /* 純白故事框 */
+            --text-color: #1a1a1a;
+            --accent-color: #b83232; /* 沉穩暗紅 */
+            --border-pixel: 4px solid #1a1a1a; /* 像素粗黑邊 */
+            --normal-green: #27ae60;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Courier New', Courier, monospace, 'PingFang TC', 'Microsoft JhengHei';
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+
+            /* 全程固定的黃昏森林背景（暮色天空 -> 淺紫霧氣 -> 深紫地面） */
+            background: linear-gradient(to bottom, 
+                #3a2f4c 0%,    /* 頂部：冷調夜幕紫 */
+                #cc6a52 35%,   /* 中上：黃昏暗橘 */
+                #a17bb8 65%,   /* 中下：渲染的淺紫色霧氣 */
+                #403564 85%,   /* 底部：深紫地面 */
+                #231b36 100%
+            );
+            background-attachment: fixed;
+        }
+
+        /* 像素風黃昏樹木剪影裝飾 */
+        body::before {
+            content: "";
+            position: fixed;
+            bottom: 15%; 
+            left: 0;
+            width: 100%;
+            height: 150px;
+            z-index: -1;
+            opacity: 0.25;
+            background: linear-gradient(45deg, #1a1528 25%, transparent 25%) -50px 0,
+                        linear-gradient(-45deg, #1a1528 25%, transparent 25%) -50px 0,
+                        linear-gradient(45deg, transparent 75%, #1a1528 75%),
+                        linear-gradient(-45deg, transparent 75%, #1a1528 75%);
+            background-size: 40px 100px;
+        }
+
+        /* 像素風格復古網格 */
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0,0,0,0.04) 2px, transparent 2px),
+                              linear-gradient(90deg, rgba(0,0,0,0.04) 2px, transparent 2px);
+            background-size: 16px 16px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* 像素風純白故事容器 */
+        .game-container {
+            width: 100%;
+            max-width: 700px;
+            background-color: var(--card-bg); 
+            border: var(--border-pixel);
+            padding: 35px;
+            box-shadow: 8px 8px 0px rgba(26, 21, 40, 0.5); 
+            position: relative;
+            z-index: 10;
+        }
+
+        header {
+            margin-bottom: 25px;
+            border-bottom: var(--border-pixel);
+            padding-bottom: 15px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            text-shadow: 2px 2px 0px #f0cfcf;
+        }
+
+        /* 大字體劇情敘述 */
+        .story-text {
+            font-size: 1.35rem; 
+            line-height: 1.8;
+            margin-bottom: 30px;
+            white-space: pre-line;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 像素風按鈕 */
+        button {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 3px solid #1a1a1a;
+            padding: 16px 20px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 4px 4px 0px #1a1a1a;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        button:hover {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #1a1a1a;
+        }
+
+        /* 結局方塊 */
+        .ending-box {
+            margin-top: 20px;
+            padding: 20px;
+            border: 3px dashed #1a1a1a;
+            background-color: #fcfcfc;
+        }
+        
+        .normal-title {
+            color: var(--normal-green);
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .dark-title {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+
+        .restart-btn {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            text-align: center;
+            margin-top: 20px;
+            box-shadow: 4px 4px 0px #1a1a1a;
+        }
+        
+        .restart-btn:hover {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <header>
+        <h1>◆ 紅帽與狼的林間小徑 ◆</h1>
+    </header>
+    <main>
+        <div id="story" class="story-text"></div>
+        <div id="options" class="options-container"></div>
+    </main>
+</div>
+
+<script>
+    // 故事數據（改為純第三人稱敘述）
+    const storyFlow = {
+        start: {
+            text: "【STAGE 1】\n黃昏時刻，天空染上一層明亮卻詭異的橘紅色。\n\n外婆生病了，母親讓小紅帽送些蛋糕和熱熱的牛奶過去。\n他穿戴好紅斗篷，提著籃子走進森林。就在他稍微偏離步道在林子裡採花時，一隻體型高大的大野狼悄無聲息地出現在他身後。\n\n大野狼的聲音低沉，金色的眼睛注視著小紅帽。「噢，小傢伙，這麼晚了要走去哪裡啊？」。此時，他決定：",
+            options: [
+                { text: "▶ 照實回答：「我要去森林深處的外婆家。」並大方分享採的花。", next: "scene_flower" },
+                { text: "▶ 心生警惕，撒謊說：「我只是在附近散步。」隨後快步走開。", next: "scene_lie" },
+                { text: "▶ 低下頭，默默遞給大野狼一塊蛋糕，用斗篷遮住自己的臉。", next: "scene_cake" }
+            ]
+        },
+
+        scene_flower: {
+            text: "【STAGE 2】\n聽完小紅帽的話，大野狼露出了意味深長的微笑，隨即轉身躍入叢林。小紅帽繼續慢悠悠地採完花，這才走向外婆家。\n\n當他推開外婆家的門時，木床的帷帳半遮半掩。他緩步走上前，看著躺在床上的「外婆」，總覺得有哪裡不太對勁……",
+            options: [
+                { text: "▶ 詢問：「外婆，妳的耳朵、眼睛、嘴巴怎麼那麼大？」", next: "ask_wolf" },
+                { text: "▶ 直接掀開棉被，拿起防身的防狼噴霧往床上猛噴！", next: "attack_bed" },
+                { text: "▶ 假裝沒發現，默默反鎖大門，在門口大聲呼喊遠處的獵人。", next: "call_hunter_early" }
+            ]
+        },
+
+        scene_lie: {
+            text: "【STAGE 2】\n大野狼似乎看穿了謊言，但只是冷笑一聲便消失在迷霧中。小紅帽心有餘悸，決定抄捷徑全速趕往外婆家。\n\n當他趕到時，屋子裡一片死寂，外婆的衣物散落一地。大野狼正坐在椅子上擦拭著嘴角的血跡，冷冷地看著闖入的他。",
+            options: [
+                { text: "▶ 驚慌失措，轉身奪門而出，往森林的伐木場狂奔。", next: "run_to_woods" },
+                { text: "▶ 憤怒蓋過恐懼，拿起門邊的砍柴斧頭朝大野狼揮去！", next: "fight_wolf" },
+                { text: "▶ 雙腿發軟跪在地上，閉上眼睛等待命運的降臨。", next: "surrender" }
+            ]
+        },
+
+        scene_cake: {
+            text: "【STAGE 2】\n大野狼接過蛋糕，有些驚訝於這個孩子的順從。大野狼深深地看了他一眼，低語道：「真是個奇怪的孩子……」隨後便消失了。\n\n當小紅帽來到外婆家時，門是虛掩的。他走進臥室，發現大野狼躺在床上假扮外婆。\n\n小紅帽該做出什麼舉動？",
+            options: [
+                { text: "▶ 緩步走到床邊坐下，撫摸大野狼探出被子的毛茸茸耳朵。", next: "love_touch" },
+                { text: "▶ 站在安全距離，對著床上的大野狼說：「別演了，我知道是你。」", next: "expose_wolf" },
+                { text: "▶ 突然感到一陣退縮，把剩餘的蛋糕放在桌上，轉身離開屋子。", next: "leave_quietly" }
+            ]
+        },
+
+        // ================= 結局判定 =================
+
+        ask_wolf: {
+            text: "｢那是為了把你吃掉啊！」大野狼咆哮著從床上撲向小紅帽！\n\n然而就在這危急關頭，砰的一聲，清脆的槍響劃破寧靜。一位老練的獵人正好路過，開槍擊中了野獸。大野狼倒在血泊中，獵人剖開巨獸的肚子，救出了還活著的外婆。",
+            isEnding: true, type: "normal", title: "【普通結局一：經典的救贖】",
+            desc: "小紅帽和外婆都平安無事，雖然經歷了一場驚魂，但童話迎來了最標準的圓滿收場。他向獵人致謝，決定以後絕對聽媽媽的話。"
+        },
+
+        attack_bed: {
+            text: "床上的大野狼被突如來的強烈噴霧刺激得痛苦嚎叫，從床上滾落下來。牠一邊揉著眼睛一邊撞破窗戶狼狽逃走。隨後，小紅帽成功在衣櫃裡找到了被綁起來、但安然無恙的外婆。",
+            isEnding: true, type: "normal", title: "【普通結局二：機智的防衛】",
+            desc: "小紅帽用現代智慧改寫了劇本。雖然外婆受了點驚嚇，但他們平安地享用了蛋糕。大野狼再也不敢靠近這座木屋了。"
+        },
+
+        call_hunter_early: {
+            text: "呼喊聲很快引來了附近的巡邏獵人。\n\n獵人衝進屋內，與大野狼發生激烈搏鬥，最終將其趕跑。雖然大野狼受傷逃走了，所幸外婆也只是受了輕傷。",
+            isEnding: true, type: "normal", title: "【普通結局三：驚險的幸存】",
+            desc: "驚魂未定的小紅帽和外婆在獵人的護送下回到了村莊。雖然保住了性命，但森林的陰影與野獸的低吼，成為了他短時間內揮之不去的噩夢。"
+        },
+
+        run_to_woods: {
+            text: "小紅帽拼命往外跑，但野獸的速度遠比人類快得多。\n\n在接近伐木場的邊緣時，一隻巨大的陰影將他撲倒。他沒能叫出聲，四周只剩下風吹過樹梢的沙沙聲。",
+            isEnding: true, type: "dark", title: "【黑暗結局一：林間的捕食】",
+            desc: "他沒能逃脫原作中獵物的宿命。大野狼在獵人趕到前飽餐了一頓，森林再度回歸寂靜，村莊裡再也沒有人見過那個穿紅斗篷的孩子。"
+        },
+
+        fight_wolf: {
+            text: "小紅帽揮舞著斧頭，但瘦弱的身體根本不是巨狼的對手。大野狼輕易地奪下了他的武器，將他逼到了冰冷的牆角。\n\n獠牙抵著脖子，他絕望地閉上了眼睛。",
+            isEnding: true, type: "dark", title: "【黑暗結局二：狼巢的囚徒】",
+            desc: "大野狼沒有當場咬斷他的喉嚨，而是將他當作了戰利品，用鐵鏈禁錮在森林最深處的枯木巢穴中。他失去了自由，在永恆的黑暗與恐懼中，漸漸遺忘了陽光的溫度。"
+        },
+
+        love_touch: {
+            text: "小紅帽摘下了頭上的紅色斗篷。\n\n大野狼愣住了，原本準備撲上去的尖牙僵在了半空。\n直到此刻，大野狼才發現，一直被自己誤認為少女的人，其實是一名少年。\n\n而那雙眼睛裡的情感，早已超越了迷戀。",
+            isEnding: true, type: "dark", title: "【黑暗結局三：紅斗篷下隱藏的情感】",
+            desc: "（※達成了特殊隱藏結局：揭示了少年的真實性別與對野獸的隱晦暗戀。）"
+        }
+    };
+
+    // 輔支過渡
+    storyFlow.expose_wolf = { text: "大野狼見偽裝被識破，發出惱怒的吼叫，直接撲了過來！", options: [{text: "▶ 試圖抵抗", next: "fight_wolf"}, {text: "▶ 轉身逃跑", next: "run_to_woods"}, {text: "▶ 放棄抵抗", next: "surrender"}] };
+    storyFlow.leave_quietly = { text: "小紅帽轉身離開，但在院子裡就被尾隨而來的大野狼攔住了去路。", options: [{text: "▶ 奮力逃向森林", next: "run_to_woods"}, {text: "▶ 拿起木棍抵抗", next: "fight_wolf"}, {text: "▶ 驚嚇過度動彈不得", next: "surrender"}] };
+    storyFlow.surrender = { text: "他放棄了反抗，大野狼緩緩張開了血盆大口……", options: [{text: "▶ 迎接終局", next: "run_to_woods"}, {text: "▶ 迎接終局", next: "run_to_woods"}, {text: "▶ 迎接終局", next: "run_to_woods"}] };
+
+    function renderGame(nodeKey) {
+        const node = storyFlow[nodeKey];
+        const storyDiv = document.getElementById('story');
+        const optionsDiv = document.getElementById('options');
+        
+        storyDiv.innerHTML = '';
+        optionsDiv.innerHTML = '';
+
+        if (node.isEnding) {
+            const titleClass = node.type === 'normal' ? 'normal-title' : 'dark-title';
+            storyDiv.innerHTML = `
+                <p style="margin-bottom: 20px;">${node.text}</p>
+                <div class="ending-box">
+                    <div class="${titleClass}">${node.title}</div>
+                    <p style="font-size: 1.1rem; color: #444; font-weight: normal;">${node.desc}</p>
+                </div>
+            `;
+            
+            const restartBtn = document.createElement('button');
+            restartBtn.textContent = "◀ 再次翻開童話第一頁 (Restart)";
+            restartBtn.classList.add('restart-btn');
+            restartBtn.onclick = () => renderGame('start');
+            optionsDiv.appendChild(restartBtn);
+        } else {
+            storyDiv.textContent = node.text;
+            node.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.textContent = opt.text;
+                btn.onclick = () => renderGame(opt.next);
+                optionsDiv.appendChild(btn);
+            });
+        }
+    }
+
+    window.onload = () => {
+        renderGame('start');
+    };
+</script>
+
+</body>
+</html>
